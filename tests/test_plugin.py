@@ -72,13 +72,15 @@ class TestPlugin:
 
         mocker.get_replies("/corpse_start", group=chat)
 
-        # turn passed to test1@example.org
+        msg = mocker.get_one_reply("/corpse_status", addr="test1@example.org", group=chat)
+        assert "❌" not in msg.text
+
+        # game ended so an aditional message is sent in group
         msgs = mocker.get_replies("/corpse_leave", group=chat)
         assert len(msgs) == 2
 
-        # game ended so an aditional message is sent in group
-        msgs = mocker.get_replies("/corpse_leave", addr="test1@example.org", group=chat)
-        assert len(msgs) == 2
+        msg = mocker.get_one_reply("/corpse_status", addr="test1@example.org", group=chat)
+        assert "❌" in msg.text
 
     def test_status(self, mocker) -> None:
         chat = mocker.get_one_reply("/corpse_new 1 2", group="group1").chat
