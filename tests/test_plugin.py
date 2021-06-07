@@ -95,3 +95,22 @@ class TestPlugin:
 
         msg = mocker.get_one_reply("/corpse_status", group=chat)
         assert "❌" in msg.text
+
+    def test_game_ending(self, mocker) -> None:
+        chat = mocker.get_one_reply("/corpse_new 2 2", group="group1").chat
+        mocker.get_one_reply("/corpse_join", addr="test1@example.org", group=chat)
+
+        mocker.get_replies("/corpse_start", group=chat)
+        mocker.get_replies("hello world")
+
+        mocker.get_replies("/corpse_leave", group=chat)
+
+        msg = mocker.get_one_reply("/corpse_status", group=chat)
+        assert "❌" not in msg.text
+
+        # only remaining player, game ends here
+        mocker.get_replies("from test land", addr="test1@example.org")
+
+        # game is over
+        msg = mocker.get_one_reply("/corpse_status", group=chat)
+        assert "❌" in msg.text
