@@ -64,7 +64,7 @@ def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
 
                 p = _get_by_round(game)
 
-                if p is None:  # game over
+                if p is None or p.addr == sender.addr:  # game over
                     replies.add(
                         text=_end_game(session, game),
                         chat=bot.get_chat(game.chat_id),
@@ -271,11 +271,14 @@ def _end_game(session, game: Game) -> str:
 def _remove_from_game(
     bot: DeltaBot, replies: Replies, session, player: Player, game: Game
 ) -> None:
+    player_round = player.round
     game.players.remove(player)
     if player.addr == game.turn:
         p = _get_by_round(game)
         chat = bot.get_chat(game.chat_id)
-        if p is None or len(game.players) <= 1:
+        if p is None or (
+            len(game.players) == 1 and (not game.text or p.round > player_round)
+        ):
             replies.add(text=_end_game(session, game), chat=chat)
         else:
             game.turn = p.addr
