@@ -50,7 +50,9 @@ def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
             game = player.game
 
             if len(message.text.split()) < game.words:
-                replies.add(text=f"❌ Text too short. Send a message with at least {game.words} words")
+                replies.add(
+                    text=f"❌ Text too short. Send a message with at least {game.words} words"
+                )
             else:
                 paragraph = game.text + " " + message.text
                 game.text = paragraph
@@ -114,8 +116,7 @@ def corpse_new(bot: DeltaBot, payload: str, message: Message, replies: Replies) 
 
 @simplebot.command
 def corpse_join(bot: DeltaBot, message: Message, replies: Replies) -> None:
-    """Join to an Exquisite Corpse game in the group it is sent.
-    """
+    """Join to an Exquisite Corpse game in the group it is sent."""
     if not message.chat.is_group():
         replies.add(text="❌ This is not a group.")
         return
@@ -135,7 +136,10 @@ def corpse_join(bot: DeltaBot, message: Message, replies: Replies) -> None:
                 replies.add(text="❌ You are already playing Exquisite Corpse.")
             return
 
-        if game.turn and session.query(Player).filter_by(addr=game.turn).first().round > 1:
+        if (
+            game.turn
+            and session.query(Player).filter_by(addr=game.turn).first().round > 1
+        ):
             replies.add(text="⌛ Too late!!! You can't join the game at this time")
             return
 
@@ -145,8 +149,7 @@ def corpse_join(bot: DeltaBot, message: Message, replies: Replies) -> None:
 
 @simplebot.command
 def corpse_start(bot: DeltaBot, message: Message, replies: Replies) -> None:
-    """Start Exquisite Corpse game.
-    """
+    """Start Exquisite Corpse game."""
     if not message.chat.is_group():
         replies.add(text="❌ This is not a group.")
         return
@@ -171,8 +174,7 @@ def corpse_start(bot: DeltaBot, message: Message, replies: Replies) -> None:
 
 @simplebot.command
 def corpse_end(message: Message, replies: Replies) -> None:
-    """End Exquisite Corpse game.
-    """
+    """End Exquisite Corpse game."""
     if not message.chat.is_group():
         replies.add(text="❌ This is not a group.")
         return
@@ -188,8 +190,7 @@ def corpse_end(message: Message, replies: Replies) -> None:
 
 @simplebot.command
 def corpse_leave(bot: DeltaBot, message: Message, replies: Replies) -> None:
-    """Leave the Exquisite Corpse game you are in.
-    """
+    """Leave the Exquisite Corpse game you are in."""
     sender = message.get_sender_contact()
     with session_scope() as session:
         player = session.query(Player).filter_by(addr=sender.addr).first()
@@ -202,8 +203,7 @@ def corpse_leave(bot: DeltaBot, message: Message, replies: Replies) -> None:
 
 @simplebot.command
 def corpse_status(bot: DeltaBot, message: Message, replies: Replies) -> None:
-    """Show the game status.
-    """
+    """Show the game status."""
     if not message.chat.is_group():
         replies.add(text="❌ This is not a group.")
         return
@@ -216,9 +216,14 @@ def corpse_status(bot: DeltaBot, message: Message, replies: Replies) -> None:
             replies.add(text="❌ There is no game created in this group.")
 
 
-def _run_turn(bot: DeltaBot, replies: Replies, player: Player, game: Game, group: Chat) -> None:
+def _run_turn(
+    bot: DeltaBot, replies: Replies, player: Player, game: Game, group: Chat
+) -> None:
     contact = bot.get_contact(player.addr)
-    replies.add(text=f"{GAME_BANNER}⏳ Round {player.round}/{game.rounds}\n\n{contact.name}, it's your turn...", chat=group)
+    replies.add(
+        text=f"{GAME_BANNER}⏳ Round {player.round}/{game.rounds}\n\n{contact.name}, it's your turn...",
+        chat=group,
+    )
 
     if game.text:
         hint = " ".join(game.text.rsplit(maxsplit=5)[-5:])
@@ -263,7 +268,9 @@ def _end_game(session, game: Game) -> str:
     return text + "\n\n▶️ Play again? /corpse_new"
 
 
-def _remove_from_game(bot: DeltaBot, replies: Replies, session, player: Player, game: Game) -> None:
+def _remove_from_game(
+    bot: DeltaBot, replies: Replies, session, player: Player, game: Game
+) -> None:
     game.players.remove(player)
     if player.addr == game.turn:
         p = _get_by_round(game)

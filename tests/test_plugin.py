@@ -2,7 +2,9 @@ class TestPlugin:
     def test_new(self, mocker) -> None:
         settings = "⏳{} - 📝{}"
 
-        msg = mocker.get_one_reply("/corpse_new", addr="test0@example.org", group="group0")
+        msg = mocker.get_one_reply(
+            "/corpse_new", addr="test0@example.org", group="group0"
+        )
         assert settings.format(3, 10) in msg.text
 
         msg = mocker.get_one_reply("/corpse_new")
@@ -63,7 +65,9 @@ class TestPlugin:
         mocker.get_one_reply("/corpse_join", addr="test1@example.org", group=chat)
         mocker.get_one_reply("/corpse_join", addr="test2@example.org", group=chat)
 
-        msg = mocker.get_one_reply("/corpse_leave", addr="test2@example.org", group=chat)
+        msg = mocker.get_one_reply(
+            "/corpse_leave", addr="test2@example.org", group=chat
+        )
         assert "❌" not in msg.text
 
         mocker.get_replies("/corpse_start", group=chat)
