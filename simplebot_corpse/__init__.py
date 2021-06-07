@@ -51,7 +51,8 @@ def filter_messages(bot: DeltaBot, message: Message, replies: Replies) -> None:
 
             if len(message.text.split()) < game.words:
                 replies.add(
-                    text=f"❌ Text too short. Send a message with at least {game.words} words"
+                    text=f"❌ Text too short. Send a message with at least {game.words} words",
+                    quote=message,
                 )
             else:
                 paragraph = game.text + " " + message.text
@@ -84,19 +85,23 @@ def corpse_new(bot: DeltaBot, payload: str, message: Message, replies: Replies) 
     a minimum of five words per turn: `/corpse_new 6 5`
     """
     if not message.chat.is_group():
-        replies.add(text="❌ This is not a group.")
+        replies.add(text="❌ This is not a group.", quote=message)
         return
 
     sender = message.get_sender_contact()
     with session_scope() as session:
         player = session.query(Player).filter_by(addr=sender.addr).first()
         if player:
-            replies.add(text="❌ You are already playing Exquisite Corpse.")
+            replies.add(
+                text="❌ You are already playing Exquisite Corpse.", quote=message
+            )
             return
 
         game = session.query(Game).filter_by(chat_id=message.chat.id).first()
         if game:
-            replies.add(text="❌ There is a game already running in this group.")
+            replies.add(
+                text="❌ There is already a game created in this group.", quote=message
+            )
             return
 
         game = Game(chat_id=message.chat.id, rounds=3, words=10)
@@ -107,7 +112,7 @@ def corpse_new(bot: DeltaBot, payload: str, message: Message, replies: Replies) 
                 game.words = args[1]
 
         if game.rounds < 1 and game.words < 1:
-            replies.add(text="❌ Invalid game setup.")
+            replies.add(text="❌ Invalid game setup.", quote=message)
         else:
             game.players.append(Player(addr=sender.addr))
             session.add(game)
@@ -118,29 +123,34 @@ def corpse_new(bot: DeltaBot, payload: str, message: Message, replies: Replies) 
 def corpse_join(bot: DeltaBot, message: Message, replies: Replies) -> None:
     """Join to an Exquisite Corpse game in the group it is sent."""
     if not message.chat.is_group():
-        replies.add(text="❌ This is not a group.")
+        replies.add(text="❌ This is not a group.", quote=message)
         return
 
     sender = message.get_sender_contact()
     with session_scope() as session:
         game = session.query(Game).filter_by(chat_id=message.chat.id).first()
         if not game:
-            replies.add(text="❌ There is no game created in this group.")
+            replies.add(text="❌ There is no game created in this group.", quote=message)
             return
 
         player = session.query(Player).filter_by(addr=sender.addr).first()
         if player:
             if player.game.chat_id == game.chat_id:
-                replies.add(text="❌ You already joined this game.")
+                replies.add(text="❌ You already joined this game.", quote=message)
             else:
-                replies.add(text="❌ You are already playing Exquisite Corpse.")
+                replies.add(
+                    text="❌ You are already playing Exquisite Corpse in another group.",
+                    quote=message,
+                )
             return
 
         if (
             game.turn
             and session.query(Player).filter_by(addr=game.turn).first().round > 1
         ):
-            replies.add(text="⌛ Too late!!! You can't join the game at this time")
+            replies.add(
+                text="⌛ Too late!!! You can't join the game at this time", quote=message
+            )
             return
 
         game.players.append(Player(addr=sender.addr))
@@ -151,19 +161,19 @@ def corpse_join(bot: DeltaBot, message: Message, replies: Replies) -> None:
 def corpse_start(bot: DeltaBot, message: Message, replies: Replies) -> None:
     """Start Exquisite Corpse game."""
     if not message.chat.is_group():
-        replies.add(text="❌ This is not a group.")
+        replies.add(text="❌ This is not a group.", quote=message)
         return
 
     with session_scope() as session:
         game = session.query(Game).filter_by(chat_id=message.chat.id).first()
         if not game:
-            replies.add(text="❌ There is no game created in this group.")
+            replies.add(text="❌ There is no game created in this group.", quote=message)
             return
         if game.turn:
-            replies.add(text="❌ Game already started.")
+            replies.add(text="❌ Game already started.", quote=message)
             return
         if len(game.players) <= 1:
-            replies.add(text="❌ There is not sufficient players")
+            replies.add(text="❌ There is not sufficient players", quote=message)
             return
 
         player = _get_by_round(game)
@@ -176,13 +186,13 @@ def corpse_start(bot: DeltaBot, message: Message, replies: Replies) -> None:
 def corpse_end(message: Message, replies: Replies) -> None:
     """End Exquisite Corpse game."""
     if not message.chat.is_group():
-        replies.add(text="❌ This is not a group.")
+        replies.add(text="❌ This is not a group.", quote=message)
         return
 
     with session_scope() as session:
         game = session.query(Game).filter_by(chat_id=message.chat.id).first()
         if not game:
-            replies.add(text="❌ There is no game created in this group.")
+            replies.add(text="❌ There is no game created in this group.", quote=message)
             return
 
         replies.add(text=_end_game(session, game))
@@ -196,16 +206,16 @@ def corpse_leave(bot: DeltaBot, message: Message, replies: Replies) -> None:
         player = session.query(Player).filter_by(addr=sender.addr).first()
         if player:
             _remove_from_game(bot, replies, session, player, player.game)
-            replies.add(text="You abandoned the game.", chat=bot.get_chat(sender))
+            replies.add(text="You abandoned the game.", quote=message)
         else:
-            replies.add(text="❌ You are not playing Exquisite Corpse.")
+            replies.add(text="❌ You are not playing Exquisite Corpse.", quote=message)
 
 
 @simplebot.command
 def corpse_status(bot: DeltaBot, message: Message, replies: Replies) -> None:
     """Show the game status."""
     if not message.chat.is_group():
-        replies.add(text="❌ This is not a group.")
+        replies.add(text="❌ This is not a group.", quote=message)
         return
 
     with session_scope() as session:
@@ -213,7 +223,7 @@ def corpse_status(bot: DeltaBot, message: Message, replies: Replies) -> None:
         if game:
             replies.add(text=_show_status(bot, game))
         else:
-            replies.add(text="❌ There is no game created in this group.")
+            replies.add(text="❌ There is no game created in this group.", quote=message)
 
 
 def _run_turn(
