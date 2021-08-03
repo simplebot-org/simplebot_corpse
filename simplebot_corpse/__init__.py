@@ -3,8 +3,7 @@ from typing import Optional
 
 import simplebot
 from deltachat import Chat, Contact, Message
-from simplebot import DeltaBot
-from simplebot.bot import Replies
+from simplebot.bot import DeltaBot, Replies
 
 from .orm import Game, Player, init, session_scope
 
