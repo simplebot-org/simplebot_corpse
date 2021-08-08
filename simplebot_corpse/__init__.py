@@ -1,3 +1,5 @@
+"""hooks, commands and filters definitions."""
+
 import os
 from typing import Optional
 
@@ -270,6 +272,7 @@ def _show_status(bot: DeltaBot, game: Game) -> str:
 def _get_by_round(game: Game) -> Optional[Player]:
     if len(game.players):
         return sorted(game.players, key=lambda p: p.round)[0]
+    return None
 
 
 def _end_game(session, game: Game) -> str:
