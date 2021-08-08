@@ -3,11 +3,16 @@ from typing import Optional
 
 import simplebot
 from deltachat import Chat, Contact, Message
+from pkg_resources import DistributionNotFound, get_distribution
 from simplebot.bot import DeltaBot, Replies
 
 from .orm import Game, Player, init, session_scope
 
-__version__ = "1.0.0"
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:
+    # package is not installed
+    __version__ = "0.0.0.dev0-unknown"
 GAME_BANNER = "💀 Exquisite Corpse\n\n"
 
 
